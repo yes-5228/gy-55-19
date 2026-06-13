@@ -49,3 +49,25 @@ class PickupResultSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     message = serializers.CharField()
     parcel = ParcelSerializer(required=False)
+
+
+class ParcelBulkInboundSerializer(serializers.Serializer):
+    items = serializers.ListField(
+        child=ParcelInboundSerializer(),
+        min_length=1,
+        max_length=100,
+    )
+
+
+class InboundResultSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    tracking_no = serializers.CharField()
+    message = serializers.CharField()
+    parcel = ParcelSerializer(required=False)
+
+
+class BulkInboundResponseSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    success_count = serializers.IntegerField()
+    fail_count = serializers.IntegerField()
+    results = serializers.ListField(child=InboundResultSerializer())

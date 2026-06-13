@@ -10,6 +10,7 @@ export const lockersApi = {
 export const parcelsApi = {
   list: () => api.get("/parcels/"),
   inbound: (payload) => api.post("/parcels/inbound/", payload),
+  bulkInbound: (payload) => api.post("/parcels/bulk_inbound/", payload),
   open: (pickupCode) => api.post("/parcels/open/", { pickup_code: pickupCode }),
 };
 

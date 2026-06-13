@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from .models import Parcel
 from .serializers import (
     ParcelInboundSerializer,
+    ParcelBulkInboundSerializer,
     ParcelSerializer,
     PickupCodeSerializer,
 )
-from .services import inbound_parcel, open_by_pickup_code
+from .services import inbound_parcel, bulk_inbound_parcels, open_by_pickup_code
 
 
 class ParcelViewSet(viewsets.ModelViewSet):
@@ -21,6 +22,28 @@ class ParcelViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         parcel = inbound_parcel(serializer.validated_data)
         return Response(ParcelSerializer(parcel).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"])
+    def bulk_inbound(self, request):
+        serializer = ParcelBulkInboundSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = bulk_inbound_parcels(serializer.validated_data["items"])
+        serialized_results = []
+        for item in result["results"]:
+            serialized = {
+                "success": item["success"],
+                "tracking_no": item["tracking_no"],
+                "message": item["message"],
+            }
+            if item.get("parcel"):
+                serialized["parcel"] = ParcelSerializer(item["parcel"]).data
+            serialized_results.append(serialized)
+        return Response({
+            "total": result["total"],
+            "success_count": result["success_count"],
+            "fail_count": result["fail_count"],
+            "results": serialized_results,
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"])
     def open(self, request):
