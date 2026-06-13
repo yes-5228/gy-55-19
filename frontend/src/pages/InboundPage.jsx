@@ -80,21 +80,15 @@ export default function InboundPage() {
     try {
       const items = bulkItems.map(({ _id, ...rest }) => rest);
       const result = await parcelsApi.bulkInbound({ items });
-      setBulkResult(result);
       loadParcels();
       if (result.fail_count === 0) {
         setMessage(`全部入库成功，共 ${result.success_count} 票。`);
         setBulkItems([createEmptyItem()]);
       } else {
         setError(`入库完成：成功 ${result.success_count} 票，失败 ${result.fail_count} 票，请修改失败项后重新提交。`);
-        const failedTrackingNos = result.results
-          .filter((r) => !r.success)
-          .map((r) => r.tracking_no);
-        const originalItems = bulkItems;
-        const keptItems = originalItems.filter((item) =>
-          failedTrackingNos.includes(item.tracking_no)
-        );
+        const keptItems = bulkItems.filter((_, idx) => !result.results[idx]?.success);
         setBulkItems(keptItems.length > 0 ? keptItems : [createEmptyItem()]);
+        setBulkResult(result);
       }
     } catch (err) {
       setError(err.message);
@@ -120,6 +114,7 @@ export default function InboundPage() {
               className={mode === "single" ? "primary" : "ghost"}
               onClick={() => switchMode("single")}
               style={{ flex: 1 }}
+              disabled={submitting}
             >
               <PackagePlus size={16} /> 单票入库
             </button>
@@ -127,6 +122,7 @@ export default function InboundPage() {
               className={mode === "bulk" ? "primary" : "ghost"}
               onClick={() => switchMode("bulk")}
               style={{ flex: 1 }}
+              disabled={submitting}
             >
               <ListPlus size={16} /> 批量入库
             </button>
